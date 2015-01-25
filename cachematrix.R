@@ -23,8 +23,20 @@ makeCacheMatrix <- function(x = matrix()) {
     inv <<- NULL 
   } 
   get <- function(){x}  
-  setinverse <- function(inverse) {inv <<- inverse} 
-  getinverse <- function() {inv}
+  setinverse <- function(inverse) {
+    #The operators <<- and ->> are normally only used in functions, 
+    #and cause a search to made through parent environments for an 
+    #existing definition of the variable being assigned.
+    #Assigning the value of the inverse of the matrix in the parent environment
+    #This is outside the scope of the function ann can act as a global environment variable
+    inv <<- inverse 
+  } 
+  getinverse <- function() {
+  #Per scoping rules the value of inv is first looked for in the parent environment
+  #Hence we get the inverse value from there - which is being set in the parent environment
+  #using the <<- assignment operator in the setinverse function above on
+  #second run of the matrix inverse calculation
+  inv}
   list(set=set, get=get, setinverse=setinverse, getinverse=getinverse) 
   
 } 
@@ -38,10 +50,15 @@ makeCacheMatrix <- function(x = matrix()) {
 # This function assumes that the matrix is always invertible. 
 cacheSolve <- function(x, ...) { 
   # Call the getinverse() object (which is a function) from the list of objects
-  # created by the makeCacheMatrix function from the Global environment
+  # created by the makeCacheMatrix function
+  # The setinverse function per scoping rules gets the value of 'inv'
+  # from the parent environment
   # variable 'inv' and assign it to Local environment variable 'inv'
-  # If its the first call to the function the value of 'inv' will be NULL
-  # If NOT the value of 'inv' will be the cached value from the first run
+  # If its the first run to calculate the inverse the value of 'inv' will be NULL in the
+  # parent environment and as you can see in line 69 we are assigning it
+  # to 'inv' using <- which makes 'inv' available within the function environment
+  # AFTER THAT in line 74 we do the parent environment assignment for 'inv' using <<-
+  # This will now make 'inv' available as a cached value from the second run on
   inv <- x$getinverse() 
   if(!is.null(inv)) { 
     message("Cached inverse value available - displaying cached value") 
